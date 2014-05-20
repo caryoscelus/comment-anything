@@ -57,7 +57,6 @@ function getPath () {
     if (getParentUrl() == null) {
         return window.location.pathname
     } else {
-        alert(getParentUrl())
         var parser = document.createElement('a')
         parser.href = getParentUrl()
         return parser.pathname

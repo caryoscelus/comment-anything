@@ -34,12 +34,33 @@ function requestURL (type, url, mime_in, mime, content, callback) {
     xobj.send(content)
 }
 
+function getParentUrl() {
+    var isInIframe = (parent !== window)
+    var parentUrl = null
+    
+    if (isInIframe) {
+        parentUrl = document.referrer
+    }
+    
+    return parentUrl
+}
+
 function renderComment (c) {
     var comments_div = document.getElementById('comment_anything_msgs')
     var comment_div = document.createElement('div')
     comments_div.appendChild(comment_div)
     
     comment_div.innerHTML = '<h5>'+c.nick+'</h5>'+'<p>'+c.text+'</p>'
+}
+
+function getPath () {
+    if (getParentUrl() == null) {
+        return window.location.pathname
+    } else {
+        var parser = document.createElement('a')
+        parser.href = getParentUrl()
+        return parser.pathname
+    }
 }
 
 function reloadComments (message) {
@@ -49,7 +70,7 @@ function reloadComments (message) {
     msg_p.innerHTML = message
     comments_div.appendChild(msg_p)
     
-    loadURL(rest_server+'get_comments/'+site_id+'/root'+window.location.pathname, 'application/json', function (response) {
+    loadURL(rest_server+'get_comments/'+site_id+'/root'+getPath(), 'application/json', function (response) {
         json = JSON.parse(response)
         comments = json.comments
         for (var i = 0; i < comments.length; ++i) {
@@ -64,7 +85,7 @@ function post () {
     var text = document.getElementById('comment_anything_text').value
     requestURL(
         'POST',
-        rest_server+'add_comment/'+site_id+'/root'+window.location.pathname,
+        rest_server+'add_comment/'+site_id+'/root'+getPath(),
         'application/json',
         'application/json',
         JSON.stringify({

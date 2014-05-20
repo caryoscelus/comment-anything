@@ -1,6 +1,8 @@
 Easy commenting system storing everything in Redis. Not quite ready yet, but
 working..
 
+You can see example at http://comment-anything.herokuapp.com/
+
 Running & configuring
 ---------------------
 
@@ -11,8 +13,11 @@ examples or to set up environment variables.
     CA_REDIS_PORT       = redis port (e.g. 6379)
     CA_REDIS_PASSWORD   = your redis password
     CA_HOST             = host where you run this, only required for js
+                          (e.g. http://localhost:5000/)
     CA_SITE_ID          = your site id. This MUST be unique to your site, but
-                          can be shared by multiple mirrors
+                          can be shared by multiple mirrors, only required for
+                          js
+                          (e.g. test)
 
 Heroku
 ------

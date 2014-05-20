@@ -1,0 +1,2 @@
+var rest_server = 'http://localhost:5000/'
+var site_id = 'test'

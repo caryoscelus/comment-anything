@@ -81,4 +81,5 @@ def add_comment(site_id, page_uri):
     return jsonify({ 'status' : 'ok' }), 201
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    from os import environ
+    app.run(debug=True, port=int(environ.get('PORT', 5000)))

@@ -37,7 +37,7 @@ def mainjs():
 
 @app.route('/config.js', methods=['GET'])
 def configjs():
-    i = open('config.js', 'r').read()
+    i = config.get_configjs()
     return i
 
 @app.errorhandler(404)

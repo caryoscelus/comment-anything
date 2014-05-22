@@ -54,7 +54,9 @@ function renderComment (c) {
 }
 
 function getPath () {
-    if (getParentUrl() == null) {
+    if (current_path) {
+        return current_path
+    } else if (getParentUrl() == null) {
         return window.location.pathname
     } else {
         var parser = document.createElement('a')

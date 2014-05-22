@@ -37,8 +37,11 @@ def mainjs():
 
 @app.route('/config.js', methods=['GET'])
 def configjs():
-    i = config.get_configjs()
-    return i
+    return config.get_configjs()
+
+@app.route('/iframe/<string:site_id>/<path:page_uri>', methods=['GET'], strict_slashes=True)
+def iframe(site_id, page_uri):
+    return index().replace('<script src="config.js">', '<script language="javascript" type="text/javascript">\n//<--\n'+config.get_configjs(site_id, page_uri)+'//-->')
 
 @app.errorhandler(404)
 def not_found(error):

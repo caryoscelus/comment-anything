@@ -1,7 +1,10 @@
-Easy commenting system storing everything in Redis. Not quite ready yet, but
-working..
+comment-anything (CA) Easy commenting system storing everything in Redis. Not
+quite ready yet, but working..
 
 You can see example at http://comment-anything.herokuapp.com/
+
+Example of embedding inside real site (CA was specifically created for it):
+http://caryoscelus.github.io/
 
 Running & configuring
 ---------------------
@@ -18,6 +21,8 @@ examples or to set up environment variables.
                           can be shared by multiple mirrors, only required for
                           js
                           (e.g. test)
+    CA_USE_CONFIG_JS    = if this is set and not empty, config.js will be read
+                          from this file (i use it for localhost testing)
 
 Heroku
 ------

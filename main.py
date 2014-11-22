@@ -67,8 +67,7 @@ def set_comment_content(r, comment_id, whats, content):
 @app.route('/get_comments/<string:site_id>/<path:page_uri>', methods=['GET'], strict_slashes=True)
 def get_comments(site_id, page_uri=None):
     r = redis.Redis(host=config.server, port=config.port, password=config.password)
-    length = r.llen('comments:'+site_id+':'+page_uri)
-    comment_ids = r.lrange('comments:'+site_id+':'+page_uri, 0, length-1)
+    comment_ids = full_list(r, 'comments:'+site_id+':'+page_uri)
     comments = [
         get_comment_content(r, comment_id, COMMENT_FIELDS)
             for comment_id in comment_ids
@@ -85,6 +84,29 @@ def add_comment(site_id, page_uri):
     r.rpush('comments:'+site_id+':'+page_uri, comment_id)
     set_comment_content(r, comment_id, COMMENT_FIELDS, request.json)
     return jsonify({ 'status' : 'ok' }), 201
+
+def scan_all(r):
+    nxt = 0
+    keys = []
+    while True:
+        nxt, part = r.scan(nxt)
+        keys += part
+        if nxt == 0:
+            break
+    return keys
+
+def full_list(r, list_id):
+    l = r.llen(list_id)
+    return r.lrange(list_id, 0, l-1)
+
+@app.route('/dump_comments/<string:site_id>', methods=['GET'])
+def dump_comments(site_id):
+    r = redis.Redis(host=config.server, port=config.port, password=config.password)
+    all_keys = scan_all(r)
+    comments_keys = [key for key in all_keys if str(key, 'utf-8').startswith('comments:'+site_id+':')]
+    comment_ids = {str(key, 'utf-8') : full_list(r, key) for key in comments_keys}
+    comments = {key : [get_comment_content(r, cid, COMMENT_FIELDS) for cid in comment_ids[key]] for key in comment_ids}
+    return jsonify( { 'comments_dump' : comments } )
 
 if __name__ == '__main__':
     from os import environ

@@ -30,10 +30,47 @@ Heroku
 I'm using this on heroku myself, so installing should be as simple as pushing
 and changing environment variables.
 
+API
+---
+
+The following API is currently in use:
+
+    /iframe/<site_id>/<page_uri>        = embeddable HTML with related comments
+    /get_comments/<site_id>/<page_uri>  = json containing related comments
+    /add_comment/<site_id>/<page_uri>   = POST comment (json)
+    /dump_comments/<site_id>            = dump all comments for site
+
+Where
+
+    page_uri    = address of page starting with /root (e.g. /root/page.html)
+    site_id     = site id
+
+Comment data structure (fields are optional):
+    {
+        'nick'      : nick,
+        'text'      : text,
+        'date'      : date,
+        'email'     : email,
+        'website'   : website
+    }
+
+More documentation can arive later. Meanwhile, you can consult source code for
+more details.
+
 Tech
 ----
 
-* redis
-* python
-* flask
-* javascript (for client part)
+* redis (db)
+* python (server)
+* flask (server framework)
+* javascript (client)
+
+License
+-------
+
+Javascript source (aka client part) is licensed under GPLv3+ (see COPYING.gpl3
+for full text), Python source (aka client part) is licensed AGPLv3+ (see
+COPYING.agpl3).
+
+.example files and index.html are trivial and could be used without any
+restrictions.

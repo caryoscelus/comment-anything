@@ -37,7 +37,10 @@ def mainjs():
 
 @app.route('/config.js', methods=['GET'])
 def configjs():
-    return config.get_configjs()
+    if app.configjs:
+        i = open(app.configjs, 'r').read()
+        return i
+    return config.get_configjs(None, '/')
 
 @app.route('/iframe/<string:site_id>/<path:page_uri>', methods=['GET'], strict_slashes=True)
 def iframe(site_id, page_uri):
@@ -85,6 +88,10 @@ def add_comment(site_id, page_uri):
 
 if __name__ == '__main__':
     from os import environ
+    if 'CA_USE_CONFIG_JS' in environ:
+        app.configjs = environ['CA_USE_CONFIG_JS']
+    else:
+        app.configjs = None
     if 'PORT' in environ:
         app.run(debug=False, host='0.0.0.0', port=int(environ['PORT']))
     else:

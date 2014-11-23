@@ -20,9 +20,8 @@
 
 import os
 from flask import Flask, jsonify, make_response, abort, request
-import redis
+import db
 import config
-from threading import Thread
 from hashlib import md5
 
 app = Flask(__name__)
@@ -55,24 +54,17 @@ def not_found(error):
 
 COMMENT_FIELDS = ['nick', 'text', 'date', 'email', 'website',]
 
-def get_comment_content(r, comment_id, whats):
-    return dict([
-        (what, str(r.get('comment:'+str(comment_id, 'utf-8')+':'+what), 'utf-8'))
-            for what in whats])
-
-def set_comment_content(r, comment_id, whats, content):
-    for what in whats:
-        value = ''
-        if what in content:
-            value = content[what]
-        r.set('comment:'+str(comment_id)+':'+what, value)
+def get_comment(comment_id):
+    return {
+        field : app.db.get('comment', comment_id, field)
+            for field in COMMENT_FIELDS
+    }
 
 @app.route('/get_comments/<string:site_id>/<path:page_uri>', methods=['GET'], strict_slashes=True)
 def get_comments(site_id, page_uri=None):
-    r = redis.Redis(host=config.server, port=config.port, password=config.password)
-    comment_ids = full_list(r, 'comments:'+site_id+':'+page_uri)
+    comment_ids = app.db.get_list('comments', site_id, page_uri)
     comments = [
-        get_comment_content(r, comment_id, COMMENT_FIELDS)
+        get_comment(comment_id)
             for comment_id in comment_ids
     ]
     return jsonify( { 'comments' : comments } )
@@ -82,50 +74,23 @@ def add_comment(site_id, page_uri):
     if not request.json:
         abort(400)
     
-    r = redis.Redis(host=config.server, port=config.port, password=config.password)
-    comment_id = r.incr('total_count')
-    r.rpush('comments:'+site_id+':'+page_uri, comment_id)
-    set_comment_content(r, comment_id, COMMENT_FIELDS, request.json)
-    app.keys_cached = None
+    comment_id = app.db.incr('total_count')
+    app.db.list_push(comment_id, 'comments', site_id, page_uri)
+    pst = request.json
+    post = {field : (pst[field] if field in pst else '') for field in COMMENT_FIELDS}
+    app.db.set_dict(post, 'comment', comment_id)
     return jsonify({ 'status' : 'ok' }), 201
-
-def scan_all(r):
-    nxt = 0
-    keys = []
-    while True:
-        nxt, part = r.scan(nxt)
-        keys += part
-        # for some reason, it appears that different redis version may return
-        # int or byte string..
-        if int(nxt) == 0:
-            break
-    return keys
-
-def full_list(r, list_id):
-    l = r.llen(list_id)
-    return r.lrange(list_id, 0, l-1)
-
-def get_all_keys(app, r):
-    "Read all keys from Redis and put them into app.keys_cached"
-    app.keys_cached_lock = True
-    print('fetching keys...')
-    app.keys_cached = scan_all(r)
-    print('keys fetched')
-    app.keys_cached_lock = False
 
 @app.route('/dump_comments/<string:site_id>', methods=['GET'])
 def dump_comments(site_id):
-    r = redis.Redis(host=config.server, port=config.port, password=config.password)
-    if app.keys_cached:
-        all_keys = app.keys_cached
+    all_keys = app.db.request_all_keys()
+    if all_keys != None:
         comments_keys = [key for key in all_keys if str(key, 'utf-8').startswith('comments:'+site_id+':')]
-        comment_ids = {str(key, 'utf-8') : full_list(r, key) for key in comments_keys}
-        comments = {key : [get_comment_content(r, cid, COMMENT_FIELDS) for cid in comment_ids[key]] for key in comment_ids}
+        comment_ids = {str(key, 'utf-8') : app.db.get_list(key) for key in comments_keys}
+        comments = {key : [get_comment(cid) for cid in comment_ids[key]] for key in comment_ids}
         return jsonify( { 'status' : 'ok', 'comments_dump' : comments } )
     else:
-        if not app.keys_cached_lock:
-            Thread(target=get_all_keys, args=(app, r)).start()
-        return jsonify( { 'status' : 'accepted' } )
+        return jsonify( { 'status' : 'processing' } )
 
 @app.route('/remove_comment/<string:site_id>/<int:cid>/<path:page_uri>', methods=['POST'], strict_slashes=True)
 def remove_comment(site_id, cid, page_uri):
@@ -135,14 +100,12 @@ def remove_comment(site_id, cid, page_uri):
     if md5(bytes(request.json['password'], 'utf-8')).hexdigest() != config.moderate_pass_hash:
         abort(403)
     
-    r = redis.Redis(host=config.server, port=config.port, password=config.password)
     print('removing comment {0}'.format(cid))
     # remove comment from list
-    removed = r.lrem('comments:'+site_id+':'+page_uri, cid, 0)
+    removed = app.db.list_remove(cid, 0, 'comments:', site_id, page_uri)
     if removed:
         # remove actual comment content
-        for what in COMMENT_FIELDS:
-            r.delete('comment:'+str(cid)+':'+what)
+        app.db.remove_dict(COMMENT_FIELDS, 'comment', cid)
         status = 'ok'
     else:
         status = 'notfound'
@@ -154,8 +117,7 @@ if __name__ == '__main__':
         app.configjs = environ['CA_USE_CONFIG_JS']
     else:
         app.configjs = None
-    app.keys_cached = None
-    app.keys_cached_lock = False
+    app.db = db.open(config.server, config.port, config.password)
     if 'PORT' in environ:
         app.run(debug=False, host='0.0.0.0', port=int(environ['PORT']))
     else:

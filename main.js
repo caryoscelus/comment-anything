@@ -50,7 +50,15 @@ function renderComment (c) {
     var comment_div = document.createElement('div')
     comments_div.appendChild(comment_div)
     
-    comment_div.innerHTML = '<h5>'+c.nick+'</h5>'+'<p>'+c.text+'</p>'
+    var nick = c.nick
+    if (c.email) {
+        nick = '<a href="mailto:'+c.email+'">'+c.nick+'</a>'
+    }
+    comment_div.innerHTML = '<h5>'+nick+' @ '+c.date+'</h5>'
+    if (c.website) {
+        comment_div.innerHTML += '<h6><a href="'+c.website+'">'+c.website+'</a></h6>'
+    }
+    comment_div.innerHTML += '<p>'+c.text+'</p>'
 }
 
 function getPath () {

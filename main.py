@@ -137,7 +137,15 @@ def remove_comment(site_id, cid, page_uri):
     
     r = redis.Redis(host=config.server, port=config.port, password=config.password)
     print('removing comment {0}'.format(cid))
-    status = 'notfound'
+    # remove comment from list
+    removed = r.lrem('comments:'+site_id+':'+page_uri, cid, 0)
+    if removed:
+        # remove actual comment content
+        for what in COMMENT_FIELDS:
+            r.delete('comment:'+str(cid)+':'+what)
+        status = 'ok'
+    else:
+        status = 'notfound'
     return jsonify( { 'status' : status } )
 
 if __name__ == '__main__':

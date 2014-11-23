@@ -104,7 +104,9 @@ def full_list(r, list_id):
 
 def get_all_keys(app, r):
     "Read all keys from Redis and put them into app.keys_cached"
+    app.keys_cached_lock = True
     app.keys_cached = scan_all(r)
+    app.keys_cached_lock = False
 
 @app.route('/dump_comments/<string:site_id>', methods=['GET'])
 def dump_comments(site_id):
@@ -116,7 +118,8 @@ def dump_comments(site_id):
         comments = {key : [get_comment_content(r, cid, COMMENT_FIELDS) for cid in comment_ids[key]] for key in comment_ids}
         return jsonify( { 'status' : 'ok', 'comments_dump' : comments } )
     else:
-        Thread(target=get_all_keys, args=(app, r)).start()
+        if not app.keys_cached_lock:
+            Thread(target=get_all_keys, args=(app, r)).start()
         return jsonify( { 'status' : 'accepted' } )
 
 if __name__ == '__main__':
@@ -126,6 +129,7 @@ if __name__ == '__main__':
     else:
         app.configjs = None
     app.keys_cached = None
+    app.keys_cached_lock = False
     if 'PORT' in environ:
         app.run(debug=False, host='0.0.0.0', port=int(environ['PORT']))
     else:

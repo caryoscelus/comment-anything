@@ -1,5 +1,5 @@
-comment-anything (CA) Easy commenting system storing everything in Redis. Not
-quite ready yet, but working..
+comment-anything (CA) is a simple commenting system embeddable to any site
+(only javascript & iframe support required). Not quite ready yet, but working..
 
 You can see example at http://comment-anything.herokuapp.com/
 

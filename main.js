@@ -85,14 +85,19 @@ function reloadComments (message) {
 function post () {
     var nick = document.getElementById('comment_anything_nick').value
     var text = document.getElementById('comment_anything_text').value
+    var email = document.getElementById('comment_anything_email').value
+    var website = document.getElementById('comment_anything_website').value
     requestURL(
         'POST',
         rest_server+'add_comment/'+site_id+'/root'+getPath(),
         'application/json',
         'application/json',
         JSON.stringify({
-            "nick": nick,
-            "text": text
+            "nick" : nick,
+            "text" : text,
+            "date" : new Date(),
+            "email" : email,
+            "website" : website
         }),
         function (response) {
             json = JSON.parse(response)

@@ -23,6 +23,9 @@ examples or to set up environment variables.
                           (e.g. test)
     CA_USE_CONFIG_JS    = if this is set and not empty, config.js will be read
                           from this file (i use it for localhost testing)
+    CA_MODERATE_PASS_HASH = if this is set, this is treated as hash for
+                          moderator password, which is required to remove
+                          comments. Otherwise, removing is impossible
 
 Heroku
 ------
@@ -39,6 +42,8 @@ The following API is currently in use:
     /get_comments/<site_id>/<page_uri>  = json containing related comments
     /add_comment/<site_id>/<page_uri>   = POST comment (json)
     /dump_comments/<site_id>            = dump all comments for site
+    /remove_comment/<site_id>/<comment_id>/<page_uri> = POST remove comment
+                                        { "password" = your_password }
 
 Where
 

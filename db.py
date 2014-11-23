@@ -24,9 +24,9 @@ import redis
 from threading import Thread
 
 def stringify(b):
-    if type(b) == 'str':
+    if type(b) == str:
         return b
-    elif type(b) == 'bytes':
+    elif type(b) == bytes:
         return str(b, 'utf-8')
     else:
         return str(b)
@@ -46,7 +46,7 @@ class RedisWrapper:
     
     def get(self, *addr):
         'Get single value'
-        self.r.get(rid(addr))
+        return self.r.get(rid(addr))
     
     def get_list(self, *addr):
         'Get full list'

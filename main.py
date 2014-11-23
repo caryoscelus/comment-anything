@@ -56,7 +56,7 @@ COMMENT_FIELDS = ['nick', 'text', 'date', 'email', 'website',]
 
 def get_comment(comment_id):
     return {
-        field : app.db.get('comment', comment_id, field)
+        field : str(app.db.get('comment', comment_id, field), 'utf-8')
             for field in COMMENT_FIELDS
     }
 

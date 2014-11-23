@@ -55,10 +55,12 @@ def not_found(error):
 COMMENT_FIELDS = ['nick', 'text', 'date', 'email', 'website',]
 
 def get_comment(comment_id):
-    return {
+    r = {
         field : str(app.db.get('comment', comment_id, field), 'utf-8')
             for field in COMMENT_FIELDS
     }
+    r['id'] = str(comment_id, 'utf-8')
+    return r
 
 @app.route('/get_comments/<string:site_id>/<path:page_uri>', methods=['GET'], strict_slashes=True)
 def get_comments(site_id, page_uri=None):

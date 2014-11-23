@@ -45,6 +45,27 @@ function getParentUrl() {
     return parentUrl
 }
 
+function removeComment (cid) {
+    pass = prompt('Password?')
+    requestURL(
+        'POST',
+        rest_server+'remove_comment/'+site_id+'/'+cid+'/root'+getPath(),
+        'application/json',
+        'application/json',
+        JSON.stringify({
+            "password" : pass
+        }),
+        function (response) {
+            json = JSON.parse(response)
+            if (json.status == 'ok') {
+                reloadComments('comment removed, reloading..')
+            } else {
+                reloadComments('comment removing failed ('+json.status+'), reloading..')
+            }
+        }
+    )
+}
+
 function renderComment (c) {
     var comments_div = document.getElementById('comment_anything_msgs')
     var comment_div = document.createElement('div')
@@ -54,7 +75,8 @@ function renderComment (c) {
     if (c.email) {
         nick = '<a href="mailto:'+c.email+'">'+c.nick+'</a>'
     }
-    comment_div.innerHTML = '<h5>'+nick+' @ '+c.date+'</h5>'
+    remove_link = '<a href="javascript:removeComment('+c.id+')">[x]</a>'
+    comment_div.innerHTML = '<h5>'+nick+' @ '+c.date+remove_link+'</h5>'
     if (c.website) {
         comment_div.innerHTML += '<h6><a href="'+c.website+'">'+c.website+'</a></h6>'
     }

@@ -94,7 +94,9 @@ def scan_all(r):
     while True:
         nxt, part = r.scan(nxt)
         keys += part
-        if nxt == 0:
+        # for some reason, it appears that different redis version may return
+        # int or byte string..
+        if int(nxt) == 0:
             break
     return keys
 
@@ -105,7 +107,9 @@ def full_list(r, list_id):
 def get_all_keys(app, r):
     "Read all keys from Redis and put them into app.keys_cached"
     app.keys_cached_lock = True
+    print('fetching keys...')
     app.keys_cached = scan_all(r)
+    print('keys fetched')
     app.keys_cached_lock = False
 
 @app.route('/dump_comments/<string:site_id>', methods=['GET'])

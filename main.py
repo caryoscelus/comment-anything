@@ -23,6 +23,7 @@ from flask import Flask, jsonify, make_response, abort, request
 import redis
 import config
 from threading import Thread
+from hashlib import md5
 
 app = Flask(__name__)
 
@@ -125,6 +126,19 @@ def dump_comments(site_id):
         if not app.keys_cached_lock:
             Thread(target=get_all_keys, args=(app, r)).start()
         return jsonify( { 'status' : 'accepted' } )
+
+@app.route('/remove_comment/<string:site_id>/<int:cid>/<path:page_uri>', methods=['POST'], strict_slashes=True)
+def remove_comment(site_id, cid, page_uri):
+    if not request.json:
+        abort(400)
+    
+    if md5(bytes(request.json['password'], 'utf-8')).hexdigest() != config.moderate_pass_hash:
+        abort(403)
+    
+    r = redis.Redis(host=config.server, port=config.port, password=config.password)
+    print('removing comment {0}'.format(cid))
+    status = 'notfound'
+    return jsonify( { 'status' : status } )
 
 if __name__ == '__main__':
     from os import environ

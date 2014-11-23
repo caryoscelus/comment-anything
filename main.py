@@ -98,7 +98,7 @@ def remove_comment(site_id, cid, page_uri):
         abort(400)
     
     if md5(bytes(request.json['password'], 'utf-8')).hexdigest() != config.moderate_pass_hash:
-        abort(403)
+        return jsonify( { 'status' : 'denied' } )
     
     print('removing comment {0}'.format(cid))
     # remove comment from list

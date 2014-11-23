@@ -104,7 +104,7 @@ def remove_comment(site_id, cid, page_uri):
     
     print('removing comment {0}'.format(cid))
     # remove comment from list
-    removed = app.db.list_remove(cid, 0, 'comments:', site_id, page_uri)
+    removed = app.db.list_remove(cid, 0, 'comments', site_id, page_uri)
     if removed:
         # remove actual comment content
         app.db.remove_dict(COMMENT_FIELDS, 'comment', cid)

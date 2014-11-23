@@ -22,6 +22,7 @@ import os
 from flask import Flask, jsonify, make_response, abort, request
 import redis
 import config
+from threading import Thread
 
 app = Flask(__name__)
 
@@ -84,6 +85,7 @@ def add_comment(site_id, page_uri):
     comment_id = r.incr('total_count')
     r.rpush('comments:'+site_id+':'+page_uri, comment_id)
     set_comment_content(r, comment_id, COMMENT_FIELDS, request.json)
+    app.keys_cached = None
     return jsonify({ 'status' : 'ok' }), 201
 
 def scan_all(r):
@@ -100,14 +102,22 @@ def full_list(r, list_id):
     l = r.llen(list_id)
     return r.lrange(list_id, 0, l-1)
 
+def get_all_keys(app, r):
+    "Read all keys from Redis and put them into app.keys_cached"
+    app.keys_cached = scan_all(r)
+
 @app.route('/dump_comments/<string:site_id>', methods=['GET'])
 def dump_comments(site_id):
     r = redis.Redis(host=config.server, port=config.port, password=config.password)
-    all_keys = scan_all(r)
-    comments_keys = [key for key in all_keys if str(key, 'utf-8').startswith('comments:'+site_id+':')]
-    comment_ids = {str(key, 'utf-8') : full_list(r, key) for key in comments_keys}
-    comments = {key : [get_comment_content(r, cid, COMMENT_FIELDS) for cid in comment_ids[key]] for key in comment_ids}
-    return jsonify( { 'comments_dump' : comments } )
+    if app.keys_cached:
+        all_keys = app.keys_cached
+        comments_keys = [key for key in all_keys if str(key, 'utf-8').startswith('comments:'+site_id+':')]
+        comment_ids = {str(key, 'utf-8') : full_list(r, key) for key in comments_keys}
+        comments = {key : [get_comment_content(r, cid, COMMENT_FIELDS) for cid in comment_ids[key]] for key in comment_ids}
+        return jsonify( { 'status' : 'ok', 'comments_dump' : comments } )
+    else:
+        Thread(target=get_all_keys, args=(app, r)).start()
+        return jsonify( { 'status' : 'accepted' } )
 
 if __name__ == '__main__':
     from os import environ
@@ -115,6 +125,7 @@ if __name__ == '__main__':
         app.configjs = environ['CA_USE_CONFIG_JS']
     else:
         app.configjs = None
+    app.keys_cached = None
     if 'PORT' in environ:
         app.run(debug=False, host='0.0.0.0', port=int(environ['PORT']))
     else:

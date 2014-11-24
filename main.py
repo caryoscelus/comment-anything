@@ -20,9 +20,11 @@
 
 import os
 from flask import Flask, jsonify, make_response, abort, request
-import db
-import config
 from hashlib import md5
+
+import db
+from cors import cors
+import config
 
 app = Flask(__name__)
 
@@ -69,7 +71,7 @@ def get_comments(site_id, page_uri=None):
         get_comment(comment_id)
             for comment_id in comment_ids
     ]
-    return jsonify( { 'comments' : comments } )
+    return cors( '*', jsonify( { 'comments' : comments } ) )
 
 def set_comment(cid, site_id, page_uri, pst):
     app.db.list_push(cid, 'comments', site_id, page_uri)
@@ -84,7 +86,7 @@ def add_comment(site_id, page_uri):
     comment_id = app.db.incr('total_count')
     set_comment(comment_id, site_id, page_uri, request.json)
     
-    return jsonify({ 'status' : 'ok' }), 201
+    return cors( '*', jsonify({ 'status' : 'ok' }), 201 )
 
 @app.route('/dump_comments/<string:site_id>', methods=['GET'])
 def dump_comments(site_id):
@@ -126,7 +128,7 @@ def remove_comment(site_id, cid, page_uri):
         abort(400)
     
     if md5(bytes(request.json['password'], 'utf-8')).hexdigest() != config.moderate_pass_hash:
-        return jsonify( { 'status' : 'denied' } )
+        return cors( '*', jsonify( { 'status' : 'denied' } ) )
     
     print('removing comment {0}'.format(cid))
     # remove comment from list
@@ -137,7 +139,7 @@ def remove_comment(site_id, cid, page_uri):
         status = 'ok'
     else:
         status = 'notfound'
-    return jsonify( { 'status' : status } )
+    return cors( '*', jsonify( { 'status' : status } ) )
 
 if __name__ == '__main__':
     from os import environ

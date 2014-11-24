@@ -114,6 +114,8 @@ def undump_comments(site_id):
         for comment in dump[page_uri]:
             cid = comment.pop('id')
             set_comment(cid, site_id, page_uri, comment)
+    
+    return jsonify( { 'status' : 'ok' } )
 
 @app.route('/remove_comment/<string:site_id>/<int:cid>/<path:page_uri>', methods=['POST'], strict_slashes=True)
 def remove_comment(site_id, cid, page_uri):

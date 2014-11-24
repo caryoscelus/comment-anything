@@ -106,11 +106,14 @@ def undump_comments(site_id):
         return jsonify( { 'status' : 'denied' } )
     
     print('restoring comments from dump')
-    if 'clear' in request.json and request.json['clear'] == '1':
+    clear = request.json.get('clear', 'none')
+    if clear == 'hard':
         clear_comments(site_id)
     
     dump = request.json['comments_dump']
     for page_uri in dump:
+        if clear == 'soft':
+            app.db.remove('comments', site_id, page_uri)
         for comment in dump[page_uri]:
             cid = comment.pop('id')
             set_comment(cid, site_id, page_uri, comment)

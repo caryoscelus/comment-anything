@@ -92,7 +92,7 @@ def dump_comments(site_id):
     if all_keys != None:
         comments_keys = [key for key in all_keys if str(key, 'utf-8').startswith('comments:'+site_id+':')]
         comment_ids = {str(key, 'utf-8') : app.db.get_list(key) for key in comments_keys}
-        comments = {key : [get_comment(cid) for cid in comment_ids[key]] for key in comment_ids}
+        comments = {db.unrid(key)[-1] : [get_comment(cid) for cid in comment_ids[key]] for key in comment_ids}
         return jsonify( { 'status' : 'ok', 'comments_dump' : comments } )
     else:
         return jsonify( { 'status' : 'processing' } )

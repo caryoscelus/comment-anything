@@ -34,6 +34,9 @@ def stringify(b):
 def rid(args):
     return ':'.join([stringify(arg) for arg in args])
 
+def unrid(s):
+    return stringify(s).split(':')
+
 def get_all_keys(self):
     self.get_all_keys()
 

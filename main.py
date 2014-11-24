@@ -71,16 +71,19 @@ def get_comments(site_id, page_uri=None):
     ]
     return jsonify( { 'comments' : comments } )
 
+def set_comment(cid, site_id, page_uri, pst):
+    app.db.list_push(cid, 'comments', site_id, page_uri)
+    post = {field : (pst[field] if field in pst else '') for field in COMMENT_FIELDS}
+    app.db.set_dict(post, 'comment', cid)
+
 @app.route('/add_comment/<string:site_id>/<path:page_uri>', methods=['POST'], strict_slashes=True)
 def add_comment(site_id, page_uri):
     if not request.json:
         abort(400)
     
     comment_id = app.db.incr('total_count')
-    app.db.list_push(comment_id, 'comments', site_id, page_uri)
-    pst = request.json
-    post = {field : (pst[field] if field in pst else '') for field in COMMENT_FIELDS}
-    app.db.set_dict(post, 'comment', comment_id)
+    set_comment(comment_id, site_id, page_uri, request.json)
+    
     return jsonify({ 'status' : 'ok' }), 201
 
 @app.route('/dump_comments/<string:site_id>', methods=['GET'])
@@ -93,6 +96,24 @@ def dump_comments(site_id):
         return jsonify( { 'status' : 'ok', 'comments_dump' : comments } )
     else:
         return jsonify( { 'status' : 'processing' } )
+
+@app.route('/undump_comments/<string:site_id>', methods=['POST'])
+def undump_comments(site_id):
+    if not request.json:
+        abort(400)
+    
+    if md5(bytes(request.json['password'], 'utf-8')).hexdigest() != config.moderate_pass_hash:
+        return jsonify( { 'status' : 'denied' } )
+    
+    print('restoring comments from dump')
+    if 'clear' in request.json and request.json['clear'] == '1':
+        clear_comments(site_id)
+    
+    dump = request.json['comments_dump']
+    for page_uri in dump:
+        for comment in dump[page_uri]:
+            cid = comment.pop('id')
+            set_comment(cid, site_id, page_uri, comment)
 
 @app.route('/remove_comment/<string:site_id>/<int:cid>/<path:page_uri>', methods=['POST'], strict_slashes=True)
 def remove_comment(site_id, cid, page_uri):

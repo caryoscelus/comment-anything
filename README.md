@@ -6,6 +6,9 @@ You can see example at http://comment-anything.herokuapp.com/
 Example of embedding inside real site (CA was specifically created for it):
 http://caryoscelus.github.io/
 
+NOTE: CA is currently being rewritten in PureScript.
+Client part is here: https://github.com/caryoscelus/comment-anything-fp-client
+
 Running & configuring
 ---------------------
 
@@ -74,7 +77,7 @@ License
 -------
 
 Javascript source (aka client part) is licensed under GPLv3+ (see COPYING.gpl3
-for full text), Python source (aka client part) is licensed AGPLv3+ (see
+for full text), Python source (aka server part) is licensed AGPLv3+ (see
 COPYING.agpl3).
 
 .example files and index.html are trivial and could be used without any

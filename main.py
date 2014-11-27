@@ -87,7 +87,7 @@ def add_comment(site_id, page_uri):
     comment_id = app.db.incr('total_count')
     set_comment(comment_id, site_id, page_uri, request.json)
     
-    return jsonify({ 'status' : 'ok' }), 201
+    return jsonify({ 'status' : 'ok' })
 
 @app.route('/dump_comments/<string:site_id>', methods=['GET'])
 def dump_comments(site_id):
